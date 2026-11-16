@@ -2,7 +2,7 @@ const validateRegister = (req, res, next) => {
     const { name, email, password } = req.body;
 
     if (!name || !email || !password) {
-        return res.status(403).json({ message: 'Faltan parámetros obligatorios en registro' });
+        return res.status(400).json({ message: 'Faltan parámetros obligatorios en registro' });
     }
 
     if (!email.includes('@') || !email.includes('.')) {

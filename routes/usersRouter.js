@@ -1,6 +1,7 @@
 import express from 'express';
 import authMiddleware from '../middlewares/authMiddleware.js';
 import roleMiddleware from '../middlewares/roleMiddleware.js';
+import validateId from '../middlewares/validateId.js';
 
 import { 
     getUsers,
@@ -12,10 +13,10 @@ import {
 const router = express.Router();
 
 router.get('/',         authMiddleware, roleMiddleware, getUsers)
-router.get('/:id',      authMiddleware, roleMiddleware, getUserById)
+router.get('/:id',      authMiddleware, roleMiddleware, validateId, getUserById)
 router.post('/',        authMiddleware, roleMiddleware, postUser)
-router.put('/:id',      authMiddleware, roleMiddleware, updateUserById)
-router.delete('/:id',   authMiddleware, roleMiddleware, deleteUser )
+router.put('/:id',      authMiddleware, roleMiddleware, validateId, updateUserById)
+router.delete('/:id',   authMiddleware, roleMiddleware, validateId, deleteUser )
 
 const register = (request, response) => {
     response.send(`<!DOCTYPE html>

@@ -6,7 +6,8 @@ class ReviewsController {
         try {
             const reviews = await Review.find()
                                         .sort({ createdAt: -1 })
-                                        .populate('movie');
+                                        .populate('movie')
+                                        .populate('user', 'name');
 
             res.json({
                 message: 'success',
@@ -22,7 +23,7 @@ class ReviewsController {
     async getById(req, res) {
         try {
             const id = req.params.id;
-            const review = await Review.findById(id).populate('movie');
+            const review = await Review.findById(id).populate('movie').populate('user', 'name');
 
             if (!review) {
                 return res.status(404).json({
@@ -54,7 +55,8 @@ class ReviewsController {
 
             const reviews = await Review.find(filter)
                                         .sort({ createdAt: -1 })
-                                        .populate('movie');
+                                        .populate('movie')
+                                        .populate('user', 'name');
 
             res.json({
                 message: 'success',

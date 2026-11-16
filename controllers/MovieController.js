@@ -55,7 +55,8 @@ class MovieController {
 
             const reviews = await Review.find(filter)
                                         .sort({ createdAt: -1 })
-                                        .populate('movie');
+                                        .populate('movie')
+                                        .populate('user', 'name');
 
             res.json({
                 message: 'success',
@@ -104,7 +105,7 @@ class MovieController {
                 });
             }
 
-            const movies = await Movie.find({ title: name }).populate('genre');
+            const movies = await Movie.find({ title: { $regex: name, $options: 'i' } }).populate('genre');
 
             res.json({
                 message: 'success',

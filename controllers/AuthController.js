@@ -13,7 +13,7 @@ class AuthController {
             const { name, email, password } = req.body;
 
             if( !name || !email || !password){
-                return res.status(403).send('Faltan Parametros Obligatorios');
+                return res.status(400).send('Faltan Parametros Obligatorios');
             }
 
             // Verificar que el usuario no este registrado
@@ -55,7 +55,7 @@ class AuthController {
             const { email, password } = req.body;
 
             if( !email || !password){
-                return res.status(403).send('Faltan Parametros Obligatorios');
+                return res.status(400).send('Faltan Parametros Obligatorios');
             }
 
             // Verificar que el email exista
