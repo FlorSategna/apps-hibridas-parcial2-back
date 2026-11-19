@@ -1,13 +1,10 @@
-import Movie from '../models/moviesModel.js';
-import Genre from '../models/genresModel.js';
-import Review from '../models/reviewsModel.js';
+import movieService from '../services/MovieService.js';
 
 
 class MovieController {
     async getAll(req, res) {
         try {
-            const movies = await Movie.find()
-                                     .select('title year genre');
+            const movies = await movieService.getAll();
 
             res.json({
                 message: 'success',
@@ -23,7 +20,7 @@ class MovieController {
     async getById(req, res) {
         try {
             const mid = req.params.mid;
-            const movie = await Movie.findById(mid).populate('genre');
+            const movie = await movieService.getById(mid);
 
             if (!movie) {
                 return res.status(404).json({
@@ -47,16 +44,8 @@ class MovieController {
         try {
             const mid = req.params.mid;
             const rating = req.query.rating;
-            const filter = { movie: mid };
 
-            if (rating) {
-                filter.rating = rating;
-            }
-
-            const reviews = await Review.find(filter)
-                                        .sort({ createdAt: -1 })
-                                        .populate('movie')
-                                        .populate('user', 'name');
+            const reviews = await movieService.getReviewsByMovie(mid, rating);
 
             res.json({
                 message: 'success',
@@ -72,16 +61,8 @@ class MovieController {
     async getFiltered(req, res) {
         try {
             const { year, genre } = req.query;
-            const filter = {};
 
-            if (year) {
-                filter.year = Number(year);
-            }
-            if (genre) {
-                filter.genre = genre;
-            }
-
-            const movies = await Movie.find(filter).populate('genre');
+            const movies = await movieService.getFiltered(year, genre);
 
             res.json({
                 message: 'success',
@@ -105,7 +86,7 @@ class MovieController {
                 });
             }
 
-            const movies = await Movie.find({ title: { $regex: name, $options: 'i' } }).populate('genre');
+            const movies = await movieService.searchByName(name);
 
             res.json({
                 message: 'success',
@@ -121,7 +102,7 @@ class MovieController {
     async create(req, res) {
         try {
             const {title, year, genre, description} = req.body;
-            const movie = await Movie.create({title, year, genre, description});
+            const movie = await movieService.create({title, year, genre, description});
 
             res.status(201).json({
                 message: 'success',
@@ -139,10 +120,9 @@ class MovieController {
             const id = req.params.mid;
             const {title, year, genre, description} = req.body;
 
-            const movie = await Movie.findByIdAndUpdate(
+            const movie = await movieService.update(
                 id,
-                {title, year, genre, description},
-                { new: true, runValidators: true }
+                {title, year, genre, description}
             );
 
             if (!movie) {
@@ -166,15 +146,13 @@ class MovieController {
         try {
             const id = req.params.mid;
 
-            // No permitir eliminar películas con reseñas asociadas
-            const reviews = await Review.find({ movie: id });
-            if (reviews.length > 0) {
+            const exists = await movieService.delete(id);
+
+            if (exists?.blocked) {
                 return res.status(400).json({
-                    message: 'No es posible eliminar una película con reseñas'
+                    message: 'No es posible eliminar películas con reseñas asociadas'
                 });
             }
-
-            const exists = await Movie.findByIdAndDelete(id);
 
             if (!exists) {
                 return res.status(404).json({
@@ -188,6 +166,36 @@ class MovieController {
         } catch (error) {
             res.status(500).json({
                 message: 'Error al eliminar la película'
+            });
+        }
+    }
+
+    async uploadImage(req, res) {
+        try {
+            if (!req.file) {
+                return res.status(400).json({
+                    message: 'No se envio el archivo'
+                });
+            }
+
+            const imagePath = `/uploads/movies/${req.file.filename}`;
+            const id = req.params.mid;
+
+            const movie = await movieService.uploadImage(id, imagePath);
+
+            if (!movie) {
+                return res.status(404).json({
+                    message: 'Película no encontrada'
+                });
+            }
+
+            res.json({
+                message: 'Imagen actualizada',
+                data: movie
+            });
+        } catch (error) {
+            res.status(500).json({
+                message: 'Error al subir la imagen de la película'
             });
         }
     }

@@ -1,9 +1,9 @@
-import Review from '../models/reviewsModel.js';
+import reviewService from '../services/ReviewService.js';
 
 const ownerMiddleware = async (req, res, next) => {
     try {
         const id = req.params.id;
-        const review = await Review.findById(id);
+        const review = await reviewService.getByIdForOwner(id);
 
         if (!review) {
             return res.status(404).json({

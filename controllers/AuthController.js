@@ -1,11 +1,4 @@
-import bcrypt from 'bcrypt'
-import jwt from 'jsonwebtoken'
-import dotenv from 'dotenv'
-import User from '../models/usersModel.js';
-
-dotenv.config();
-
-const SECRET_KEY = process.env.SECRET_KEY;
+import authService from '../services/AuthService.js';
 
 class AuthController {
     async register( req, res) {
@@ -17,30 +10,19 @@ class AuthController {
             }
 
             // Verificar que el usuario no este registrado
-            const exists = await User.findOne( { email: email});
-            if( exists) {
-                return res.status(400).json({
-                    message: 'El usuario ya existe',
-                    data: {}
-                })
-            } 
+            const data = await authService.register(name, email, password);
 
-            const hashedPassword = await bcrypt.hash( password, 10 );
-            const newUser = await User.create({
-                name,
-                email,
-                password: hashedPassword
-            })
-            
-            const data = {
-                id: newUser._id,
-                email: newUser.email
-            }
+                if (!data) {
+                    return res.status(400).json({
+                        message: 'El usuario ya existe',
+                        data: {}
+                    });
+                }
 
-            res.status(201).json({
-                message: 'success',
-                data
-            })
+                res.status(201).json({
+                    message: 'success',
+                    data
+                });
 
 
         } catch (error) {
@@ -59,38 +41,18 @@ class AuthController {
             }
 
             // Verificar que el email exista
-            const user = await User.findOne( { email });
-            if( !user) {
-                return res.status(401).json({
-                    message: 'Credenciales Invalidas'
-                })
-            } 
+            const token = await authService.login(email, password);
 
-            const isValid = await bcrypt.compare( password, user.password );
+                if (!token) {
+                    return res.status(401).json({
+                        message: 'Credenciales Invalidas'
+                    });
+                }
 
-            if( !isValid){
-                return res.status(401).json({
-                    message: 'Credenciales Invalidas'
-                })
-            }
-            // Agregamos el role en los datos visibles
-            const payload = {
-                id: user._id,
-                name: user.name,
-                role: user.role
-            }
-
-            // Luego generamos el Token
-            const token = jwt.sign( 
-                payload, 
-                SECRET_KEY, 
-                { expiresIn: '1h'}
-            );
-
-            res.json({
-                message: 'Credenciales Correctas!',
-                token
-            })
+                res.json({
+                    message: 'Credenciales Correctas!',
+                    token
+                });
 
         } catch (error) {
             console.log( error);

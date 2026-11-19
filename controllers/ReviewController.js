@@ -1,13 +1,9 @@
-import Review from '../models/reviewsModel.js';
-import Movie from '../models/moviesModel.js';
+import reviewService from '../services/ReviewService.js';
 
 class ReviewsController {
     async getAll(req, res) {
         try {
-            const reviews = await Review.find()
-                                        .sort({ createdAt: -1 })
-                                        .populate('movie')
-                                        .populate('user', 'name');
+            const reviews = await reviewService.getAll();
 
             res.json({
                 message: 'success',
@@ -23,7 +19,7 @@ class ReviewsController {
     async getById(req, res) {
         try {
             const id = req.params.id;
-            const review = await Review.findById(id).populate('movie').populate('user', 'name');
+            const review = await reviewService.getById(id);
 
             if (!review) {
                 return res.status(404).json({
@@ -47,16 +43,8 @@ class ReviewsController {
         try {
             const mid = req.params.mid;
             const rating = req.query.rating;
-            const filter = { movie: mid };
 
-            if (rating) {
-                filter.rating = rating;
-            }
-
-            const reviews = await Review.find(filter)
-                                        .sort({ createdAt: -1 })
-                                        .populate('movie')
-                                        .populate('user', 'name');
+            const reviews = await reviewService.getByMovie(mid, rating);
 
             res.json({
                 message: 'success',
@@ -74,14 +62,13 @@ class ReviewsController {
             const { movie, comment, rating } = req.body;
             const user = req.user.id;
 
-            const movieExists = await Movie.findById(movie);
-            if (!movieExists) {
+            const review = await reviewService.create({ movie, user, comment, rating });
+
+            if (!review) {
                 return res.status(404).json({
                     message: 'La película no existe'
                 });
             }
-
-            const review = await Review.create({ movie, user, comment, rating });
 
             res.status(201).json({
                 message: 'success',
@@ -99,11 +86,7 @@ class ReviewsController {
             const id = req.params.id;
             const { comment, rating, active } = req.body;
 
-            const review = await Review.findByIdAndUpdate(
-                id,
-                { comment, rating, active },
-                { new: true, runValidators: true }
-            );
+            const review = await reviewService.update(id, { comment, rating, active });
 
             if (!review) {
                 return res.status(404).json({
@@ -125,7 +108,7 @@ class ReviewsController {
     async delete(req, res) {
         try {
             const id = req.params.id;
-            const review = await Review.findByIdAndDelete(id);
+            const review = await reviewService.delete(id);
 
             if (!review) {
                 return res.status(404).json({

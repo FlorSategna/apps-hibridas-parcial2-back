@@ -22,6 +22,10 @@ const movieSchema = new mongoose.Schema({
         default: "",
         maxlength: 512
     },
+    image: {
+        type: String,
+        default: null
+    },
     active: {
         type: Boolean,
         default: true

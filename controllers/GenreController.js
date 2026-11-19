@@ -1,10 +1,9 @@
-import Genre from '../models/genresModel.js';
-import Movie from '../models/moviesModel.js';
+import genreService from '../services/GenreService.js';
 
 class GenreController {
     async getAll(req, res) {
         try {
-            const genres = await Genre.find();
+            const genres = await genreService.getAll();
 
             res.json({
                 message: 'success',
@@ -20,7 +19,7 @@ class GenreController {
     async getById(req, res) {
         try {
             const id = req.params.id;
-            const genre = await Genre.findById(id);
+            const genre = await genreService.getById(id);
 
             if (!genre) {
                 return res.status(404).json({
@@ -43,7 +42,7 @@ class GenreController {
         try {
             const { name } = req.body;
 
-            const genre = await Genre.create({ name });
+            const genre = await genreService.create({ name });
 
             res.json({
                 message: 'success',
@@ -61,11 +60,7 @@ class GenreController {
             const id = req.params.id;
             const { name, active } = req.body;
 
-            const genre = await Genre.findByIdAndUpdate(
-                id,
-                { name, active },
-                { new: true, runValidators: true }
-            );
+            const genre = await genreService.update(id, { name, active });
 
             if (!genre) {
                 return res.status(404).json({
@@ -89,20 +84,19 @@ class GenreController {
             const id = req.params.id;
 
             // No permitir borrar géneros con películas asociadas
-            const movies = await Movie.find({ genre: id });
-            if (movies.length > 0) {
-                return res.status(400).json({
-                    message: 'No es posible eliminar un género con películas asociadas'
-                });
-            }
+            const genre = await genreService.delete(id);
 
-            const genre = await Genre.findByIdAndDelete(id);
+                if (genre?.blocked) {
+                    return res.status(400).json({
+                        message: 'No es posible eliminar un género con películas asociadas'
+                    });
+                }
 
-            if (!genre) {
-                return res.status(404).json({
-                    message: 'Género no encontrado'
-                });
-            }
+                if (!genre) {
+                    return res.status(404).json({
+                        message: 'Género no encontrado'
+                    });
+                }
 
             res.json({
                 message: 'success'
